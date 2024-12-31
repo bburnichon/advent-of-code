@@ -1,4 +1,4 @@
-use day_11::*;
+use day_12::*;
 
 fn main() {
     // Run registered benchmarks.
@@ -15,9 +15,8 @@ fn part1() {
 
 #[divan::bench]
 fn part2() {
-    part2::process(
-        divan::black_box(include_str!("../input2.txt",)),
-        25,
-    )
+    part2::process(divan::black_box(include_str!(
+        "../input2.txt",
+    )))
     .unwrap();
 }
