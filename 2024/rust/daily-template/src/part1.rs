@@ -1,6 +1,7 @@
 #[tracing::instrument(skip(input))]
 pub fn process(input: &str) -> miette::Result<String> {
-    let result = parse(input)?;
+    let result = parse(input)
+        .map_err(|err| miette::miette!("Parse error: {}", err))?;
 
     Ok(result.to_string())
 }
