@@ -13,11 +13,18 @@ fn parse(input: &str) -> Result<String, &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
-    fn test_process() -> miette::Result<()> {
-        let input = "";
-        assert_eq!("", process(input)?);
+    #[rstest]
+    #[case(
+        "",
+        ""
+    )]
+    fn test_process(
+        #[case] input: &str,
+        #[case] expected: &str,
+    ) -> miette::Result<()> {
+        assert_eq!(expected, process(input)?);
         Ok(())
     }
 }
