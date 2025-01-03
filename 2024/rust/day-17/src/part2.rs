@@ -22,42 +22,37 @@ pub fn process(input: &str) -> miette::Result<String> {
         VecDeque::from_iter((0..8).zip([1usize; 8]));
 
     let mut matches = vec![];
-    'a: while let Some((a, len)) = search_space.pop_front()
-    {
+    while let Some((a, len)) = search_space.pop_front() {
         let mut to_search = Clone::clone(&computer);
         to_search.register_a = a;
-        let mut to_search = to_search.flatten();
 
-        println!("a = {:#064b} {}", a, a);
-        for (index, expected) in computer
+        // Check tail of the program sequence
+        let tail_iterator = computer
             .program
             .iter()
             .skip(program_length - len)
-            .copied()
-            .enumerate()
-        {
-            match to_search.next() {
-                Some(actual) if actual == expected => {}
-                Some(actual) => {
-                    println!("Failing at index {} with value {}, expected {}", index, actual, expected);
-                    continue 'a;
-                }
-                None => {
-                    println!("Failing at index {}, no more values", index);
-                }
-            }
+            .copied();
+
+        if !check_iterator(
+            to_search.flatten(),
+            tail_iterator,
+        ) {
+            continue;
         }
-        if to_search.next().is_none() {
-            if len >= program_length {
-                matches.push(a);
-                println!("Match of total len found with a = {a:064b}");
-            } else {
-                println!("Match of len {len} found with a = {a:064b}");
-                let next = 8 * a;
-                search_space.extend(
-                    (next..(next + 8)).zip([len + 1; 8]),
-                );
-            }
+
+        if len >= program_length {
+            // A match was found, add it to the result set
+            matches.push(a);
+        } else {
+            // A partial match was found, add 8 new values
+            // to the Breadth first search.
+            // register_a is shifted right by three bits in
+            // the process so longer match will use one of
+            // the eight possible combination
+            let next = 8 * a;
+            search_space.extend(
+                (next..(next + 8)).zip([len + 1; 8]),
+            );
         }
     }
 
@@ -66,6 +61,28 @@ pub fn process(input: &str) -> miette::Result<String> {
         .min()
         .ok_or_else(|| miette::miette!("No result found"))?
         .to_string())
+}
+
+fn check_iterator<I>(
+    mut to_search: impl Iterator<Item = I>,
+    compare: impl Iterator<Item = I>,
+) -> bool
+where
+    I: PartialEq,
+{
+    for expected in compare {
+        let Some(actual) = to_search.next() else {
+            // Not enough values in output
+            return false;
+        };
+        if expected != actual {
+            // Not the expected value
+            return false;
+        }
+    }
+
+    // Check iterator was all consumed
+    to_search.next().is_none()
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
